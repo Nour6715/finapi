@@ -148,3 +148,52 @@ finapi/
 └── tests/
     └── test_app.py
 ```
+---
+
+## Lab 2 — ETL Pipeline & Base de Données
+
+### Installer les nouvelles dépendances
+```bash
+pip install sqlalchemy
+pip install -r requirements.txt
+```
+
+### Initialiser la base de données
+```bash
+python -c "from finapi.db import init_db; init_db(); print('DB created')"
+```
+
+### Lancer le pipeline ETL
+```bash
+python scripts/run_etl.py AAPL MSFT GOOGL
+```
+
+### Afficher un résumé de la base
+```bash
+python scripts/show_db.py
+```
+
+### Nouveaux endpoints
+
+#### Prix depuis la base (rapide, hors-ligne)
+GET /db/prices/<ticker>
+curl http://localhost:5000/db/prices/AAPL
+
+#### News depuis la base
+GET /db/news/<ticker>curl http://localhost:5000/db/news/AAPL
+
+#### Statistiques des tables
+GET /db/stats curl http://localhost:5000/db/stats
+
+### Structure mise à jour
+finapi/
+├── data/finapi.db
+├── scripts/run_etl.py
+├── scripts/show_db.py
+├── finapi/db.py
+├── finapi/models.py
+├── finapi/etl/prices_etl.py
+└── finapi/etl/news_etl.py
+
+EOF
+

@@ -6,4 +6,8 @@ __pycache__/
 .DS_Store
 *.env
 *.gitignore~
+# Database journal files (temporary, not needed)
+*.db-journal
+*.db-wal
+*.db-shm
 
