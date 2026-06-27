@@ -28,10 +28,13 @@ class NewsItem(Base):
     published_at = Column(DateTime, nullable=False, index=True)
     title = Column(String(512), nullable=False)
     publisher = Column(String(128))
-    url = Column(String(1024), unique=True)  # URL = cle de deduplication
+    url = Column(String(1024), unique=True)
     summary = Column(String(2048))
 
+    # Lab 3: colonnes sentiment
+    sentiment_label = Column(String(16), nullable=True)
+    sentiment_score = Column(Float, nullable=True)
+
     __table_args__ = (
-        # BONUS: index composite (ticker, published_at) sur news
         Index("ix_news_ticker_published_at", "ticker", "published_at"),
     )
