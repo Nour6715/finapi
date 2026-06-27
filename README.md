@@ -187,13 +187,112 @@ GET /db/stats curl http://localhost:5000/db/stats
 
 ### Structure mise à jour
 finapi/
-├── data/finapi.db
-├── scripts/run_etl.py
-├── scripts/show_db.py
-├── finapi/db.py
-├── finapi/models.py
-├── finapi/etl/prices_etl.py
-└── finapi/etl/news_etl.py
 
+├── .gitignore
+
+├── README.md
+
+├── requirements.txt
+
+├── data/
+
+│   └── finapi.db          ← base SQLite 
+
+├── scripts/
+
+│   ├── run_etl.py         ← pipeline orchestrateur
+
+│   └── show_db.py         
+
+├── finapi/
+
+│   ├── init.py
+
+│   ├── app.py             ← routes Flask (mis à jour)
+
+│   ├── prices.py          ← logique yfinance
+
+│   ├── db.py              ← engine SQLAlchemy
+
+│   ├── models.py          ← modèles ORM + index composite
+
+│   └── etl/
+
+│       ├── init.py
+
+│       ├── prices_etl.py  ← ETL prix idempotent
+
+│       └── news_etl.py    ← ETL news avec dédoublonnage
+
+└── tests/
+
+└── test_app.py
+
+
+cat >> README.md << 'EOF'
+
+---
+
+## Lab 3 — FinBERT & Analyse de Sentiment
+
+### Installer les dépendances
+```bash
+pip install torch --index-url https://download.pytorch.org/whl/cpu
+pip install transformers
+pip install -r requirements.txt
+```
+
+### Migration de la base (Lab 3 ajoute 2 colonnes)
+```bash
+rm data/finapi.db
+python -c "from finapi.db import init_db; init_db()"
+PYTHONPATH=. python scripts/run_etl.py AAPL MSFT GOOGL
+```
+
+### Enrichir les news avec le sentiment
+```bash
+PYTHONPATH=. python scripts/enrich_sentiment.py
+```
+
+### Nouveaux endpoints
+
+#### Sentiment d'un texte unique
+POST /sentiment
+
+curl -X POST http://localhost:5000/sentiment 
+
+-H "Content-Type: application/json" 
+
+-d '{"text": "Apple beat earnings expectations."}'
+
+#### Sentiment batch (max 100 textes)
+
+POST /sentiment/batch
+
+curl -X POST http://localhost:5000/sentiment/batch 
+
+-H "Content-Type: application/json" 
+
+-d '{"texts": ["Good news", "Bad news"]}'
+
+#### Résumé des sentiments par ticker
+
+GET /db/sentiment-summary/<ticker>
+
+curl http://localhost:5000/db/sentiment-summary/AAPL
+
+#### Benchmark batch vs unitaire (bonus)
+
+POST /sentiment/benchmark
+
+curl -X POST http://localhost:5000/sentiment/benchmark 
+
+-H "Content-Type: application/json" 
+
+-d '{"texts": ["text1", "text2", ...]}'
+
+### Lancer les tests
+```bash
+python -m pytest tests/ -v
+```
 EOF
-
