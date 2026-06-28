@@ -1,7 +1,9 @@
 """Acces aux donnees de marche via yfinance."""
+
 from dataclasses import dataclass
 from datetime import date
 from functools import lru_cache
+
 import yfinance as yf
 
 
@@ -33,10 +35,7 @@ def _fetch_history(ticker: str, period: str):
     history = yf_ticker.history(period=period, auto_adjust=False)
     if history.empty:
         raise TickerNotFoundError(f"Ticker '{ticker}' introuvable")
-    return [
-        (ts.date(), round(float(close), 2))
-        for ts, close in history["Close"].items()
-    ]
+    return [(ts.date(), round(float(close), 2)) for ts, close in history["Close"].items()]
 
 
 @lru_cache(maxsize=128)

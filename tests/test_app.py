@@ -1,6 +1,9 @@
 """Tests automatiques pour l'API FinAPI — Labs 1, 2 et 3."""
+
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
+
 from finapi.app import create_app
 
 
@@ -14,6 +17,7 @@ def client():
 
 
 # ── Lab 1 tests ───────────────────────────────────────────────────────
+
 
 def test_health_returns_200(client):
     response = client.get("/health")
@@ -42,6 +46,7 @@ def test_compare_missing_tickers_returns_400(client):
 
 # ── Lab 3 tests (avec mock — ne charge PAS le vrai modele) ───────────
 
+
 def make_mock_pipeline(label="positive", score=0.95):
     """Cree un faux pipeline qui renvoie toujours le meme label."""
     mock_pipe = MagicMock()
@@ -54,8 +59,7 @@ def test_sentiment_endpoint_positive(client):
     with patch("finapi.sentiment.get_pipeline") as mock_get:
         mock_get.return_value = make_mock_pipeline("positive", 0.95)
         response = client.post(
-            "/sentiment",
-            json={"text": "Apple stock soared after earnings beat expectations."}
+            "/sentiment", json={"text": "Apple stock soared after earnings beat expectations."}
         )
     assert response.status_code == 200
     data = response.get_json()
@@ -79,10 +83,7 @@ def test_sentiment_batch_endpoint(client):
     ]
     with patch("finapi.sentiment.get_pipeline") as mock_get:
         mock_get.return_value = mock_pipe
-        response = client.post(
-            "/sentiment/batch",
-            json={"texts": ["Good news", "Bad news"]}
-        )
+        response = client.post("/sentiment/batch", json={"texts": ["Good news", "Bad news"]})
     assert response.status_code == 200
     data = response.get_json()
     assert data["count"] == 2
@@ -91,10 +92,7 @@ def test_sentiment_batch_endpoint(client):
 
 def test_sentiment_batch_too_many_texts_returns_400(client):
     """POST /sentiment/batch avec plus de 100 textes renvoie 400."""
-    response = client.post(
-        "/sentiment/batch",
-        json={"texts": ["text"] * 101}
-    )
+    response = client.post("/sentiment/batch", json={"texts": ["text"] * 101})
     assert response.status_code == 400
 
 
@@ -102,4 +100,3 @@ def test_sentiment_batch_empty_list_returns_400(client):
     """POST /sentiment/batch avec liste vide renvoie 400."""
     response = client.post("/sentiment/batch", json={"texts": []})
     assert response.status_code == 400
-    

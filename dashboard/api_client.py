@@ -1,63 +1,71 @@
-"""Client HTTP pour l'API Flask finapi."""
-from __future__ import annotations
-from typing import Any
-import requests
+"""Client pour HF Spaces : appel direct des fonctions backend (pas HTTP)."""
 
-API_BASE = "http://localhost:5000"
+from sqlalchemy import func
 
-
-class APIError(Exception):
-    pass
-
-
-def _get(path: str, **params) -> dict[str, Any]:
-    try:
-        r = requests.get(f"{API_BASE}{path}", params=params, timeout=10)
-    except requests.RequestException as e:
-        raise APIError(f"API injoignable : {e}") from e
-    if r.status_code != 200:
-        raise APIError(f"{r.status_code}: {r.text[:200]}")
-    return r.json()
+from finapi.db import SessionLocal, init_db
+from finapi.models import NewsItem, PriceRecord
 
 
 def get_health() -> bool:
-    try:
-        return _get("/health").get("status") == "ok"
-    except APIError:
-        return False
-
-
-def get_db_prices(ticker: str) -> list[dict]:
-    return _get(f"/db/prices/{ticker}").get("prices", [])
-
-
-def get_db_news(ticker: str) -> list[dict]:
-    return _get(f"/db/news/{ticker}").get("news", [])
-
-
-def get_sentiment_summary(ticker: str) -> dict[str, int]:
-    return _get(f"/db/sentiment-summary/{ticker}").get("distribution", {})
+    return True  # toujours OK en mode embedded
 
 
 def get_db_stats() -> dict:
-    return _get("/db/stats")
-
-
-def get_price_history(ticker: str, period: str = "1mo") -> list[dict]:
-    """BONUS: recupere l'historique sur une periode donnee via yfinance."""
-    try:
-        return _get(f"/history/{ticker}", days=_period_to_days(period))
-    except APIError:
-        return []
-
-
-def _period_to_days(period: str) -> int:
-    """Convertit une periode lisible en nombre de jours."""
-    mapping = {
-        "7d": 7,
-        "1mo": 30,
-        "3mo": 90,
-        "6mo": 180,
-        "1y": 365,
+    init_db()
+    with SessionLocal() as session:
+        n_p = session.query(PriceRecord).count()
+        n_n = session.query(NewsItem).count()
+        n_e = session.query(NewsItem).filter(NewsItem.sentiment_label.isnot(None)).count()
+        tickers = sorted({t for (t,) in session.query(PriceRecord.ticker).distinct()})
+    return {
+        "prices_count": n_p,
+        "news_count": n_n,
+        "news_enriched": n_e,
+        "tickers": tickers,
     }
-    return mapping.get(period, 30)
+
+
+def get_db_prices(ticker: str) -> list[dict]:
+    with SessionLocal() as session:
+        rows = (
+            session.query(PriceRecord)
+            .filter(PriceRecord.ticker == ticker.upper())
+            .order_by(PriceRecord.date.desc())
+            .limit(100)
+            .all()
+        )
+    return [{"date": r.date.isoformat(), "close": r.close} for r in rows]
+
+
+def get_db_news(ticker: str) -> list[dict]:
+    with SessionLocal() as session:
+        rows = (
+            session.query(NewsItem)
+            .filter(NewsItem.ticker == ticker.upper())
+            .order_by(NewsItem.published_at.desc())
+            .limit(20)
+            .all()
+        )
+    return [
+        {
+            "published_at": r.published_at.isoformat(),
+            "title": r.title,
+            "publisher": r.publisher,
+            "url": r.url,
+            "sentiment_label": r.sentiment_label,
+            "sentiment_score": r.sentiment_score,
+        }
+        for r in rows
+    ]
+
+
+def get_sentiment_summary(ticker: str) -> dict[str, int]:
+    with SessionLocal() as session:
+        rows = (
+            session.query(NewsItem.sentiment_label, func.count(NewsItem.id))
+            .filter(NewsItem.ticker == ticker.upper())
+            .filter(NewsItem.sentiment_label.isnot(None))
+            .group_by(NewsItem.sentiment_label)
+            .all()
+        )
+    return {label: count for label, count in rows}

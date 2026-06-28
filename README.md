@@ -1,9 +1,32 @@
+---
+title: FinSentiment
+emoji: 📈
+colorFrom: blue
+colorTo: yellow
+sdk: streamlit
+sdk_version: 1.35.0
+app_file: dashboard/app.py
+pinned: false
+license: mit
+---
+
+# FinSentiment — API Flask + Dashboard Streamlit
+
+![CI](https://github.com/Nour6715/finapi/actions/workflows/ci.yml/badge.svg)
+
+Dashboard interactif d'analyse de sentiment financier avec Flask, FinBERT et Streamlit.
+
+**URL publique:** https://huggingface.co/spaces/Wiem6715/finsentiment
+**Code source:** https://github.com/Nour6715/finapi
+
+
+
 # FinAPI — Lab 1 · Foundations Back-End
 
 A REST API built with Flask that returns real-time stock prices using the yfinance library.
 
-**Author:** Wiem Brini  
-**Course:** Coaching M1/M2 — Finance Quantitative  
+**Author:** Wiem Brini
+**Course:** Coaching M1/M2 — Finance Quantitative
 **Institution:** EPT
 
 ---
@@ -196,13 +219,13 @@ finapi/
 
 ├── data/
 
-│   └── finapi.db          ← base SQLite 
+│   └── finapi.db          ← base SQLite
 
 ├── scripts/
 
 │   ├── run_etl.py         ← pipeline orchestrateur
 
-│   └── show_db.py         
+│   └── show_db.py
 
 ├── finapi/
 
@@ -259,9 +282,9 @@ PYTHONPATH=. python scripts/enrich_sentiment.py
 #### Sentiment d'un texte unique
 POST /sentiment
 
-curl -X POST http://localhost:5000/sentiment 
+curl -X POST http://localhost:5000/sentiment
 
--H "Content-Type: application/json" 
+-H "Content-Type: application/json"
 
 -d '{"text": "Apple beat earnings expectations."}'
 
@@ -269,9 +292,9 @@ curl -X POST http://localhost:5000/sentiment
 
 POST /sentiment/batch
 
-curl -X POST http://localhost:5000/sentiment/batch 
+curl -X POST http://localhost:5000/sentiment/batch
 
--H "Content-Type: application/json" 
+-H "Content-Type: application/json"
 
 -d '{"texts": ["Good news", "Bad news"]}'
 
@@ -285,9 +308,9 @@ curl http://localhost:5000/db/sentiment-summary/AAPL
 
 POST /sentiment/benchmark
 
-curl -X POST http://localhost:5000/sentiment/benchmark 
+curl -X POST http://localhost:5000/sentiment/benchmark
 
--H "Content-Type: application/json" 
+-H "Content-Type: application/json"
 
 -d '{"texts": ["text1", "text2", ...]}'
 
@@ -295,4 +318,51 @@ curl -X POST http://localhost:5000/sentiment/benchmark
 ```bash
 python -m pytest tests/ -v
 ```
+EOF
+
+## Lab 4 — Dashboard Streamlit
+
+### Installer les dépendances
+```bash
+pip install streamlit plotly requests
+pip install -r requirements.txt
+```
+
+### Lancer le dashboard (2 terminaux nécessaires)
+
+Terminal 1 — API Flask:
+```bash
+python -m finapi.app
+```
+
+Terminal 2 — Dashboard:
+```bash
+streamlit run dashboard/app.py
+```
+
+Ouvre http://localhost:8501 dans ton navigateur.
+
+### Fonctionnalités
+- Sélection de ticker dynamique
+- Slider de période (7j / 1mo / 3mo / 6mo / 1an)
+- Graphique ligne ou chandelier (OHLC)
+- 4 métriques: prix, date, news, % sentiment positif
+- Pie chart de distribution des sentiments
+- Liste des news colorées par sentiment
+- 3 onglets: Vue d'ensemble / News détaillées / Stats
+- Bouton refresh manuel
+- Mode sombre configurable
+
+### Structure du dashboard
+
+dashboard/
+
+├── init.py
+
+├── app.py          ← page principale
+
+├── api_client.py   ← appels HTTP à Flask
+
+└── charts.py       ← graphiques Plotly
+
 EOF

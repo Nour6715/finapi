@@ -2,8 +2,9 @@
 Usage:
     python scripts/show_db.py
 """
-from finapi.db import init_db, SessionLocal
-from finapi.models import PriceRecord, NewsItem
+
+from finapi.db import SessionLocal, init_db
+from finapi.models import NewsItem, PriceRecord
 
 
 def show_summary() -> None:
@@ -15,24 +16,18 @@ def show_summary() -> None:
         print(f"TABLE prices : {prices_total} lignes au total")
         print("-" * 50)
 
-        tickers_prices = (
-            session.query(PriceRecord.ticker)
-            .distinct()
-            .all()
-        )
+        tickers_prices = session.query(PriceRecord.ticker).distinct().all()
         for (ticker,) in tickers_prices:
-            count = (
-                session.query(PriceRecord)
-                .filter(PriceRecord.ticker == ticker)
-                .count()
-            )
+            count = session.query(PriceRecord).filter(PriceRecord.ticker == ticker).count()
             latest = (
                 session.query(PriceRecord)
                 .filter(PriceRecord.ticker == ticker)
                 .order_by(PriceRecord.date.desc())
                 .first()
             )
-            print(f"  {ticker:10s} → {count:3d} jours | dernier: {latest.date} | close: {latest.close}")
+            print(
+                f"  {ticker:10s} → {count:3d} jours | dernier: {latest.date} | close: {latest.close}"
+            )
 
         # Résumé table news
         news_total = session.query(NewsItem).count()
@@ -40,24 +35,18 @@ def show_summary() -> None:
         print(f"TABLE news   : {news_total} articles au total")
         print("-" * 50)
 
-        tickers_news = (
-            session.query(NewsItem.ticker)
-            .distinct()
-            .all()
-        )
+        tickers_news = session.query(NewsItem.ticker).distinct().all()
         for (ticker,) in tickers_news:
-            count = (
-                session.query(NewsItem)
-                .filter(NewsItem.ticker == ticker)
-                .count()
-            )
+            count = session.query(NewsItem).filter(NewsItem.ticker == ticker).count()
             latest = (
                 session.query(NewsItem)
                 .filter(NewsItem.ticker == ticker)
                 .order_by(NewsItem.published_at.desc())
                 .first()
             )
-            print(f"  {ticker:10s} → {count:3d} articles | dernier: {latest.published_at.strftime('%Y-%m-%d %H:%M')} | {latest.title[:50]}...")
+            print(
+                f"  {ticker:10s} → {count:3d} articles | dernier: {latest.published_at.strftime('%Y-%m-%d %H:%M')} | {latest.title[:50]}..."
+            )
         print("=" * 50)
 
 

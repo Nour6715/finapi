@@ -1,8 +1,7 @@
 """Modeles SQLAlchemy : prix et news."""
-from sqlalchemy import (
-    Column, Integer, String, Float, Date, DateTime,
-    UniqueConstraint, Index
-)
+
+from sqlalchemy import Column, Date, DateTime, Float, Index, Integer, String, UniqueConstraint
+
 from finapi.db import Base
 
 
@@ -15,9 +14,7 @@ class PriceRecord(Base):
     close = Column(Float, nullable=False)
     currency = Column(String(8), default="USD")
 
-    __table_args__ = (
-        UniqueConstraint("ticker", "date", name="uq_ticker_date"),
-    )
+    __table_args__ = (UniqueConstraint("ticker", "date", name="uq_ticker_date"),)
 
 
 class NewsItem(Base):
@@ -35,6 +32,4 @@ class NewsItem(Base):
     sentiment_label = Column(String(16), nullable=True)
     sentiment_score = Column(Float, nullable=True)
 
-    __table_args__ = (
-        Index("ix_news_ticker_published_at", "ticker", "published_at"),
-    )
+    __table_args__ = (Index("ix_news_ticker_published_at", "ticker", "published_at"),)

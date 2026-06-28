@@ -1,48 +1,21 @@
-"""# REMPLACE ceci:
-from dashboard import api_client as api
-from dashboard.charts import (
-    price_line_chart,
-    sentiment_pie_chart,
-    candlestick_chart,
-    stats_bar_chart,
-    SENT_COLORS,
-)
-
-# PAR ceci:
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from dashboard import api_client as api
-from dashboard.charts import (
-    price_line_chart,
-    sentiment_pie_chart,
-    candlestick_chart,
-    stats_bar_chart,
-    SENT_COLORS,
-)"""
-
-
-
-
-
-
 """Dashboard interactif d'analyse de sentiment financier."""
-from datetime import datetime
-import streamlit as st
-import sys
+
 import os
+import sys
+from datetime import datetime
+
+import streamlit as st
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dashboard import api_client as api
 from dashboard.charts import (
+    SENT_COLORS,
+    candlestick_chart,
     price_line_chart,
     sentiment_pie_chart,
-    candlestick_chart,
     stats_bar_chart,
-    SENT_COLORS,
 )
-
 
 """import api_client as api"""
 """from dashboard.charts import (
@@ -116,6 +89,7 @@ with st.sidebar:
 st.title(f"📈 FinSentiment — {ticker}")
 st.caption("Dashboard interactif — prix, news, sentiment FinBERT")
 
+
 # ── Chargement des données avec cache ─────────────────────────────────
 @st.cache_data(ttl=60)
 def load_prices(t: str) -> list[dict]:
@@ -143,7 +117,6 @@ tab1, tab2, tab3 = st.tabs(["📊 Vue d'ensemble", "📰 News détaillées", "�
 # ONGLET 1 — Vue d'ensemble
 # ════════════════════════════════════════════════════════════════════
 with tab1:
-
     # Métriques en haut
     col1, col2, col3, col4 = st.columns(4)
 
@@ -154,9 +127,7 @@ with tab1:
         delta_pct = round(delta / prev["close"] * 100, 2) if prev["close"] else 0
 
         col1.metric(
-            "💰 Dernier cours",
-            f"${last['close']:.2f}",
-            f"{delta:+.2f} ({delta_pct:+.2f}%)"
+            "💰 Dernier cours", f"${last['close']:.2f}", f"{delta:+.2f} ({delta_pct:+.2f}%)"
         )
         col2.metric("📅 Date", last["date"])
     else:
@@ -178,25 +149,16 @@ with tab1:
         st.subheader("📈 Évolution du prix")
         if prices:
             if chart_type == "Chandelier":
-                st.plotly_chart(
-                    candlestick_chart(prices),
-                    use_container_width=True
-                )
+                st.plotly_chart(candlestick_chart(prices), use_container_width=True)
             else:
-                st.plotly_chart(
-                    price_line_chart(prices),
-                    use_container_width=True
-                )
+                st.plotly_chart(price_line_chart(prices), use_container_width=True)
         else:
             st.info("Aucun prix en base pour ce ticker.")
 
     with g2:
         st.subheader("🎭 Distribution sentiment")
         if sentiment:
-            st.plotly_chart(
-                sentiment_pie_chart(sentiment),
-                use_container_width=True
-            )
+            st.plotly_chart(sentiment_pie_chart(sentiment), use_container_width=True)
         else:
             st.info("Aucun sentiment calculé. Lancez 'enrich_sentiment.py'.")
 
@@ -243,10 +205,7 @@ with tab2:
             default=["positive", "neutral", "negative"],
         )
 
-        filtered_news = [
-            n for n in news
-            if (n.get("sentiment_label") or "neutral") in filter_sent
-        ]
+        filtered_news = [n for n in news if (n.get("sentiment_label") or "neutral") in filter_sent]
 
         st.caption(f"{len(filtered_news)} article(s) affiché(s)")
 
@@ -256,7 +215,9 @@ with tab2:
             score = n.get("sentiment_score")
             score_str = f" — Score: {score:.2f}" if score else ""
 
-            with st.expander(f"{'🟢' if sent=='positive' else '🔴' if sent=='negative' else '⚪'} {n['title']}"):
+            with st.expander(
+                f"{'🟢' if sent == 'positive' else '🔴' if sent == 'negative' else '⚪'} {n['title']}"
+            ):
                 st.markdown(
                     f"**Publisher:** {n.get('publisher', 'N/A')}  \n"
                     f"**Date:** {n['published_at'][:16]}  \n"
@@ -284,10 +245,7 @@ with tab3:
     # Distribution sentiment en bar chart
     st.subheader(f"Distribution sentiment — {ticker}")
     if sentiment:
-        st.plotly_chart(
-            stats_bar_chart(sentiment),
-            use_container_width=True
-        )
+        st.plotly_chart(stats_bar_chart(sentiment), use_container_width=True)
         # Tableau récapitulatif
         st.subheader("Détail")
         total = sum(sentiment.values()) or 1
@@ -302,7 +260,35 @@ with tab3:
     else:
         st.info("Aucun sentiment calculé pour ce ticker.")
 
+# Ajoute "À propos" aux onglets existants:
+tab1, tab2, tab3, tab4 = st.tabs(
+    ["📊 Vue d'ensemble", "📰 News détaillées", "📈 Stats", "ℹ️ À propos"]
+)
+with tab4:
+    st.subheader("ℹ️ À propos de FinSentiment")
+    st.markdown("""
+    **FinSentiment** est un dashboard d'analyse de sentiment financier
+    construit avec Flask, FinBERT et Streamlit.
+
+    ### Stack technique
+    - **Backend:** Flask + SQLAlchemy + SQLite
+    - **ML:** FinBERT (ProsusAI/finbert) via Hugging Face Transformers
+    - **Frontend:** Streamlit + Plotly
+    - **Data:** yfinance (Yahoo Finance)
+
+    ### Parcours
+    Ce projet a été construit en 6 labs dans le cadre du cours
+    **Coaching M1/M2 Finance Quantitative** à l'ITBS.
+
+    ### Liens
+    - 🔗 [Code source GitHub](https://github.com/Nour6715/finapi)
+    - 🤗 [Hugging Face Space](https://huggingface.co/spaces/Wiem6715/finsentiment)
+    - 👨‍🏫 [Prof. Ahmed Ben Taleb — ITBS](https://www.itbs.tn)
+
+    ### Auteur
+    **Wiem** — M2 Finance Quantitative, ITBS
+    """)
+
 # ── Footer ────────────────────────────────────────────────────────────
 st.divider()
 st.caption(f"Mis à jour : {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-

@@ -2,26 +2,21 @@
 Usage:
     PYTHONPATH=. python scripts/enrich_sentiment.py
 """
+
 import logging
+
 from finapi.db import SessionLocal
-from finapi.models import NewsItem
 from finapi.finapi.sentiment import analyze_batch
+from finapi.models import NewsItem
 
 
 def main(batch_size: int = 32) -> int:
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(message)s"
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
     log = logging.getLogger(__name__)
 
     with SessionLocal() as session:
         # Seulement les news sans sentiment (idempotent)
-        rows = (
-            session.query(NewsItem)
-            .filter(NewsItem.sentiment_label.is_(None))
-            .all()
-        )
+        rows = session.query(NewsItem).filter(NewsItem.sentiment_label.is_(None)).all()
         log.info("News a enrichir : %d", len(rows))
 
         if not rows:
@@ -29,10 +24,10 @@ def main(batch_size: int = 32) -> int:
             return 0
 
         for i in range(0, len(rows), batch_size):
-            chunk = rows[i: i + batch_size]
+            chunk = rows[i : i + batch_size]
             texts = [(r.title + " " + (r.summary or "")) for r in chunk]
             results = analyze_batch(texts)
-            for r, res in zip(chunk, results):
+            for r, res in zip(chunk, results, strict=False):
                 r.sentiment_label = res.label
                 r.sentiment_score = res.score
             session.commit()
@@ -44,4 +39,3 @@ def main(batch_size: int = 32) -> int:
 if __name__ == "__main__":
     n = main()
     print(f"Enrichies : {n}")
-    
