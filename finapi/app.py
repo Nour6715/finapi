@@ -144,6 +144,8 @@ def create_app() -> Flask:
                     "title": r.title,
                     "publisher": r.publisher,
                     "url": r.url,
+                    "sentiment_label": r.sentiment_label,
+                    "sentiment_score": r.sentiment_score,
                 }
                 for r in rows
             ],
@@ -154,13 +156,25 @@ def create_app() -> Flask:
         with SessionLocal() as session:
             prices_count = session.query(PriceRecord).count()
             news_count = session.query(NewsItem).count()
+            news_enriched = (
+                session.query(NewsItem)
+                .filter(NewsItem.sentiment_label.isnot(None))
+                .count()
+            )
+            tickers = [
+                row[0] for row in
+                session.query(PriceRecord.ticker).distinct().all()
+            ]
         return jsonify({
             "tables": {
                 "prices": {"total_rows": prices_count},
                 "news": {"total_rows": news_count},
-            }
+            },
+            "tickers": tickers,
+            "prices_count": prices_count,
+            "news_count": news_count,
+            "news_enriched": news_enriched,
         })
-
     # ── Lab 3 endpoints ───────────────────────────────────────────────
 
     @app.post("/sentiment")
@@ -273,3 +287,4 @@ def create_app() -> Flask:
 
 if __name__ == "__main__":
     create_app().run(debug=True, port=5000)
+

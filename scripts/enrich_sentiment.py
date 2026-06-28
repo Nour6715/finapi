@@ -5,7 +5,7 @@ Usage:
 import logging
 from finapi.db import SessionLocal
 from finapi.models import NewsItem
-from finapi.sentiment import analyze_batch
+from finapi.finapi.sentiment import analyze_batch
 
 
 def main(batch_size: int = 32) -> int:
